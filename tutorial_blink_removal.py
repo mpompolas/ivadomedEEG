@@ -11,6 +11,9 @@ raw.set_eeg_reference('average', projection=True)
 
 raw.info['bads'] = ['MEG 2443']
 
+# Assign line frequency - Required for BIDS export
+raw.info['line_freq'] = 60
+
 
 # Reading data with a bad channel marked as bad:
 fname = data_path + '/MEG/sample/sample_audvis-ave.fif'
@@ -54,29 +57,20 @@ description = ['heartbeat'] * n_heartbeat
 epochs_heartbeat = mne.Epochs(raw, ecg_events, ecg_event_id, reject=None, preload=True)
 raw.plot(events=ecg_events)  # To see the annotated segments.
 
-
-
 #epochs_all = mne.Epochs(raw, np.append(ecg_events, eog_events, axis=0), [ecg_event_id, eog_event_id],
 #                        reject=None, preload=True)
-
-print('asdf')
-
 
 
 # Now start creating the NIFTI files
 import mne_bids
-from export_epoch_to_nifti import write_trials_bids
-
-
-
-
-
+import export_epoch_to_nifti_small
 
 single_epoch = epochs_blink[0]
 #single_epoch.resample(sfreq=10)
 epochs_blink['998'].plot_image(picks='meg')
 epochs_heartbeat['999'].plot_image(picks='meg')
 
+export_folder = '/home/nas/Desktop/test_BIDS'
 
 for iSubject in range(1, 15):
     annotated_event_for_gt = '998'  # This is the event that will be used to create the derivatives
@@ -86,14 +80,12 @@ for iSubject in range(1, 15):
     epochs_ = epochs_blink[(iSubject-1)*3:iSubject*3]
 
     # Create bids folder
-    bids_path = mne_bids.BIDSPath(subject='IVADOMEDSubjTest' + str(iSubject), session='IVADOMEDSession1', task='testing',
-                                   acquisition='01', run='01', root='/home/nas/Desktop/test_BIDS')
+    bids_path = mne_bids.BIDSPath(subject='IVADOMEDSubjTest' + str(iSubject), session='IVADOMEDSession1',
+                                  task='testing', acquisition='01', run='01', root=export_folder)
 
-    bid_path_return = write_trials_bids(epochs_, bids_path, annotated_event_for_gt, overwrite=True)
+    # Use the raw object that the trials came from in order to build the BIDS tree
+    mne_bids.write_raw_bids(raw, bids_path, overwrite=True, verbose=True)
 
-'''
-single_epoch = epochs_[0]
-trial = single_epoch.average()
-trial.plot_topomap(epochs_.times[0], size=8, extrapolate='head', colorbar=False, cmap='Greys',
-                                 outlines=None, contours=0, show=True, sensors=True, show_names=True)  # res = int selects res
-'''
+    # Export trials into .nii files
+    export_epoch_to_nifti_small.run_export(epochs_, annotated_event_for_gt, bids_path)
+
