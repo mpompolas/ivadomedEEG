@@ -3,19 +3,52 @@ import multiprocessing as mp
 from skimage import color, util
 import os
 import matplotlib.pyplot as plt
+import pandas as pd
 from pathlib import Path
 import numpy as np
+import copy
+import sys
+try:
+    import mne
+except ImportError as error:
+    sys.path.append("/home/nas/PycharmProjects/mne-python/")
+    import mne
+
+def export_channel_coordinates_to_file(outputfolder, x, y, names):
+    channels = {'Channel Names': names, 'x coordinates': x, 'y coordinates': y}
+    df = pd.DataFrame(channels, columns=['Channel Names', 'x coordinates', 'y coordinates'])
+
+    df.to_csv(os.path.join(outputfolder, 'channels.csv'))
 
 
 def trial_export(trial, times, outputfolder, iEpoch, suffix):
 
     # Save a nifti file for the epoch
-    data_nifti = np.zeros((260, 260, len(times)))
+    data_nifti = np.zeros((285, 260, len(times)))
+    data_nifti = np.zeros((705, 710, len(times)))
+
+    # Define the GLOBAL limits for the colormaps - If this is not set, the colorbar limits would be different per slice
+    # However, if there are local (in-time) artifacts - these values get affected - discuss solutions
+    vmin = np.min(trial.data)
+    vmax = np.max(trial.data)
+    vmin = None
+    vmax = None
     for iTime in range(len(times)):
-        fig = trial.plot_topomap(times[iTime], size=2, extrapolate='head', colorbar=False, cmap='Greys',
-                                 outlines=None, contours=0, show=False, sensors=False)  # res = int selects res
+        plt.figure(100)
+        fig = trial.plot_topomap(times[iTime],
+                                 vmin=vmin, vmax=vmax, show_names=True,
+                                 size=5, extrapolate='head',
+                                 colorbar=False, cmap='Greys',
+                                 outlines=None, contours=0,
+                                 show=False, sensors=True)  # res = int selects res
 
         fig.canvas.draw()
+
+        ch_type = 'mag'
+        picks, pos, merge_channels, names, ch_type, sphere, clip_origin = \
+            mne.viz.topomap._prepare_topomap_plot(trial, ch_type, sphere=None)
+
+        inverted_coordinates = fig.axes[0].transData.transform(pos)
 
         # Remove the title that shows the time
         # fig.axes[0].title = ''  # THIS DOESNT SEEM TO WORK - EXPLORE
@@ -33,9 +66,31 @@ def trial_export(trial, times, outputfolder, iEpoch, suffix):
         # Convert RGB to GRAY
         data = color.rgb2gray(data)
 
-        # CROP SIDES AND TIME - MAKE SURE THAT THE ORIENTATION IS CORRECTED
-        # RIGHT NOW THE TIME IS THE ONLY INDICATION OF WHERE THE NOSE IS
-        data = data[50:-20, 20:-20]
+
+        # CHECK FOR COORDINATES FOR THE CHANNELS
+        x = np.array(np.round(inverted_coordinates[:, 0]), dtype=int)
+        y = np.array(np.round(inverted_coordinates[:, 1]), dtype=int)
+
+        # In matplotlib, 0,0 is the lower left corner, whereas it's usually the upper
+        # left for most image software, so flip the y-coordinates
+        # ALSO: height is controlled by ROWS in a matrix
+
+        width, height = fig.canvas.get_width_height()
+        y = height - y
+        data[y, x] = -1  # Flipped x,y here
+
+        # CROP SIDES - THE COORDINATES OF THE ELECTRODES SHOULD BE SAVED AFTER CROPPING
+        crop_from_top = 50
+        crop_from_bottom = -20
+        crop_from_left = 20
+        crop_from_right = -20
+        data = data[crop_from_top:crop_from_bottom, crop_from_left:crop_from_right]
+
+        # Export channel coordinates after cropping - these values just represent pixel coordinates now
+        x = x - crop_from_left
+        y = y - crop_from_top
+        export_channel_coordinates_to_file(outputfolder, x, y, names)
+
 
         # TODO - CONFIRM THE THRESHOLDING IS CORRECT - THIS IS DONE TO HELP WITH THE INTERPOLATION
         # I ALSO ASSIGN VALUES BELOW 0.5 TO ZERO
@@ -137,7 +192,7 @@ def export_single_epoch_to_nifti(iEpoch, single_epoch, bids_path, times, annotat
 
 def run_export(epochs, annotated_event_for_gt, bids_path):
 
-    run_parallel = True
+    run_parallel = False
     if run_parallel:
         # Parallelize processing and export each epoch to a nifti file
         print('Starting parallel processing')

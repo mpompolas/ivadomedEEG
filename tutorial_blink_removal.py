@@ -1,9 +1,17 @@
 import numpy as np
-import mne
-from mne.datasets import sample
+import sys
+
+try:
+    import mne
+except ImportError as error:
+    sys.path.append("/home/nas/PycharmProjects/mne-python/")
+    import mne
+
+import mne_bids
 
 
-data_path = sample.data_path()
+
+data_path = mne.datasets.sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 raw = mne.io.read_raw_fif(raw_fname)
 raw.set_eeg_reference('average', projection=True)
@@ -24,9 +32,10 @@ evoked = mne.read_evokeds(fname, condition='Left Auditory',
 evoked.pick_types(meg=True, eeg=True, exclude=[])
 
 # plot with bads
-evoked.plot(exclude=[])
+#evoked.plot(exclude=[])
 
 print(evoked.info['bads'])
+
 
 
 events = mne.find_events(raw)
@@ -44,7 +53,7 @@ description = ['blink'] * n_blinks
 #annotations = mne.Annotations(onset, duration, description)
 #raw.set_annotations(annotations)
 epochs_blink = mne.Epochs(raw, eog_events, eog_event_id, reject=None, preload=True)
-raw.plot(events=eog_events)  # To see the annotated segments.
+#raw.plot(events=eog_events)  # To see the annotated segments.
 epochs_blink = epochs_blink[:-6]
 
 
@@ -55,20 +64,19 @@ description = ['heartbeat'] * n_heartbeat
 #annotations = mne.Annotations(onset, duration, description)
 #raw.set_annotations(annotations)
 epochs_heartbeat = mne.Epochs(raw, ecg_events, ecg_event_id, reject=None, preload=True)
-raw.plot(events=ecg_events)  # To see the annotated segments.
+#raw.plot(events=ecg_events)  # To see the annotated segments.
 
 #epochs_all = mne.Epochs(raw, np.append(ecg_events, eog_events, axis=0), [ecg_event_id, eog_event_id],
 #                        reject=None, preload=True)
 
 
 # Now start creating the NIFTI files
-import mne_bids
 import export_epoch_to_nifti_small
 
-single_epoch = epochs_blink[0]
+#single_epoch = epochs_blink[0]
 #single_epoch.resample(sfreq=10)
-epochs_blink['998'].plot_image(picks='meg')
-epochs_heartbeat['999'].plot_image(picks='meg')
+#epochs_blink['998'].plot_image(picks='meg')
+#epochs_heartbeat['999'].plot_image(picks='meg')
 
 export_folder = '/home/nas/Desktop/test_BIDS'
 
