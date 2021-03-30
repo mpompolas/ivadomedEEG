@@ -21,6 +21,8 @@ def export_channel_coordinates_to_file(outputfolder, x, y, names):
     df.to_csv(os.path.join(outputfolder, 'channels.csv'))
 
 def export_time_to_file(outputfolder, times):
+
+    # TODO- CONSIDER ADDING THE GLOBAL TIME AS WELL - THIS WILL ALLOW THE CREATION OF EVENTS IN MNE STYLE
     # The assumption here is that all trials have the same time - Maybe revisit
     # save to csv file
     np.savetxt(os.path.join(outputfolder, 'times.csv'), times, delimiter=',')
@@ -34,7 +36,7 @@ def trial_export(trial, times, ch_type, outputfolder, iEpoch, suffix):
 
 
     # Create a nifti file for the epoch
-    data_nifti = np.zeros((285, 260, len(times)))  # This is for size=2
+    data_nifti = np.zeros((315, 260, len(times)))  # This is for size=2
     #data_nifti = np.zeros((705, 710, len(times)))  # This is for size=5
 
     # Define the GLOBAL limits for the colormaps - If this is not set, the colorbar limits would be different per slice
@@ -94,7 +96,7 @@ def trial_export(trial, times, ch_type, outputfolder, iEpoch, suffix):
             print("ORDER OF X,Y NEED TO BE FINALIZED AFTER THE AFFINE MATRIX IS DONE")
 
         # CROP SIDES - THE COORDINATES OF THE ELECTRODES SHOULD BE SAVED AFTER CROPPING
-        crop_from_top = 50
+        crop_from_top = 20
         crop_from_bottom = -20
         crop_from_left = 20
         crop_from_right = -20
@@ -122,15 +124,15 @@ def trial_export(trial, times, ch_type, outputfolder, iEpoch, suffix):
 
     print('REDEFINE AFFINE MATRIX')
     # TODO - FIND THE CORRECT AFFINE MATRIX FOR ORIENTATION - USE TIME ON EACH SAMPLE BEFORE CROPPING TO FIND THE NOSE
-    # affine = np.array([[0, 0, 1, 0],
-    #                  [0, 1, 0, 0],
-    #                   [1, 0, 0, 0],
-    #                  [0, 0, 0, 1]])
-
-    affine = np.array([[0, 0, 1, 0],
-                       [1, 0, 0, 0],
-                       [0, -1, 0, 0],
+    affine = np.array([[1, 0, 0, 0],
+                       [0, 1, 0, 0],
+                       [0, 0, 1, 0],
                        [0, 0, 0, 1]])
+
+    #affine = np.array([[0, 0, 1, 0],
+    #                   [1, 0, 0, 0],
+    #                   [0, -1, 0, 0],
+    #                  [0, 0, 0, 1]])
 
     # affine = np.array([[0, -1, 0, 0],
     #                  [-1, 0, 0, 0],
