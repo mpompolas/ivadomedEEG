@@ -80,6 +80,9 @@ import export_epoch_to_nifti_small
 
 export_folder = '/home/nas/Desktop/test_BIDS'
 
+# Select channel type to create the topographies on
+ch_type = 'grad'
+
 for iSubject in range(1, 15):
     annotated_event_for_gt = '998'  # This is the event that will be used to create the derivatives
                                     # 999 Heartbeats
@@ -95,5 +98,5 @@ for iSubject in range(1, 15):
     mne_bids.write_raw_bids(raw, bids_path, overwrite=True, verbose=True)
 
     # Export trials into .nii files
-    export_epoch_to_nifti_small.run_export(epochs_, annotated_event_for_gt, bids_path)
+    export_epoch_to_nifti_small.run_export(epochs_, ch_type, annotated_event_for_gt, bids_path)
 

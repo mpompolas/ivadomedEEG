@@ -20,12 +20,22 @@ def export_channel_coordinates_to_file(outputfolder, x, y, names):
 
     df.to_csv(os.path.join(outputfolder, 'channels.csv'))
 
+def export_time_to_file(outputfolder, times):
+    # The assumption here is that all trials have the same time - Maybe revisit
+    # save to csv file
+    np.savetxt(os.path.join(outputfolder, 'times.csv'), times, delimiter=',')
 
-def trial_export(trial, times, outputfolder, iEpoch, suffix):
 
-    # Save a nifti file for the epoch
-    data_nifti = np.zeros((285, 260, len(times)))
-    data_nifti = np.zeros((705, 710, len(times)))
+
+def trial_export(trial, times, ch_type, outputfolder, iEpoch, suffix):
+
+    # Export times to a file and compare with the rest of the files
+    export_time_to_file(outputfolder, times)
+
+
+    # Create a nifti file for the epoch
+    data_nifti = np.zeros((285, 260, len(times)))  # This is for size=2
+    #data_nifti = np.zeros((705, 710, len(times)))  # This is for size=5
 
     # Define the GLOBAL limits for the colormaps - If this is not set, the colorbar limits would be different per slice
     # However, if there are local (in-time) artifacts - these values get affected - discuss solutions
@@ -36,15 +46,14 @@ def trial_export(trial, times, outputfolder, iEpoch, suffix):
     for iTime in range(len(times)):
         plt.figure(100)
         fig = trial.plot_topomap(times[iTime],
-                                 vmin=vmin, vmax=vmax, show_names=True,
-                                 size=5, extrapolate='head',
+                                 vmin=vmin, vmax=vmax, show_names=False,
+                                 size=2, extrapolate='head',
                                  colorbar=False, cmap='Greys',
                                  outlines=None, contours=0,
-                                 show=False, sensors=True)  # res = int selects res
+                                 show=False, sensors=False)  # res = int selects res
 
         fig.canvas.draw()
 
-        ch_type = 'mag'
         picks, pos, merge_channels, names, ch_type, sphere, clip_origin = \
             mne.viz.topomap._prepare_topomap_plot(trial, ch_type, sphere=None)
 
@@ -77,7 +86,12 @@ def trial_export(trial, times, outputfolder, iEpoch, suffix):
 
         width, height = fig.canvas.get_width_height()
         y = height - y
-        data[y, x] = -1  # Flipped x,y here
+
+        # Make a dot to indicate the correct positioning
+        create_dot = 0
+        if create_dot:
+            data[y, x] = -1  # Flipped x,y here
+            print("ORDER OF X,Y NEED TO BE FINALIZED AFTER THE AFFINE MATRIX IS DONE")
 
         # CROP SIDES - THE COORDINATES OF THE ELECTRODES SHOULD BE SAVED AFTER CROPPING
         crop_from_top = 50
@@ -134,14 +148,14 @@ def trial_export(trial, times, outputfolder, iEpoch, suffix):
     save(out, os.path.join(outputfolder, subject + "_epoch" + str(iEpoch) + suffix + '.nii.gz'))
 
 
-def export_single_epoch_to_nifti(iEpoch, single_epoch, bids_path, times, annotated_event_for_gt):
+def export_single_epoch_to_nifti(iEpoch, single_epoch, bids_path, times, annotated_event_for_gt, ch_type):
     # Export only if the file doesnt exist
     # if not os.path.exists(os.path.join(outputfolder, 'epoch' + str(iEpoch) + '.nii.gz')):
     # Create an evoked object for each epoch.
     # The reasoning for this is that evoked objects already have a 2D topographic plot implemented
     trial = single_epoch.average()
     suffix = ''
-    trial_export(trial, times, os.path.join(os.path.dirname(bids_path.directory), 'anat'), iEpoch, suffix)
+    trial_export(trial, times, ch_type, os.path.join(os.path.dirname(bids_path.directory), 'anat'), iEpoch, suffix)
     # This will need to be revised once the ivadomed BIDS folder tree is corrected
 
     # First zero everything on each "slice"
@@ -187,10 +201,10 @@ def export_single_epoch_to_nifti(iEpoch, single_epoch, bids_path, times, annotat
         subject_id = os.path.basename(os.path.dirname(bids_path.directory))
         derivatives_output = os.path.join(os.path.dirname(os.path.dirname(bids_path.directory)),
                                           'derivatives', 'labels', subject_id, 'anat')
-        trial_export(trial, times, derivatives_output, iEpoch, suffix)
+        trial_export(trial, times, ch_type, derivatives_output, iEpoch, suffix)
 
 
-def run_export(epochs, annotated_event_for_gt, bids_path):
+def run_export(epochs, ch_type, annotated_event_for_gt, bids_path):
 
     run_parallel = False
     if run_parallel:
@@ -198,11 +212,11 @@ def run_export(epochs, annotated_event_for_gt, bids_path):
         print('Starting parallel processing')
         pool = mp.Pool(mp.cpu_count() - 2)
         results = [pool.apply_async(export_single_epoch_to_nifti,
-                                    args=(iEpoch, epochs[iEpoch], bids_path, epochs.times, annotated_event_for_gt))
+                                    args=(iEpoch, epochs[iEpoch], bids_path, epochs.times, annotated_event_for_gt, ch_type))
                    for iEpoch in range(len(epochs))]
         pool.close()
         pool.join()
         print('Just finished parallel processing')
     else:
         for iEpoch in range(len(epochs)):
-            export_single_epoch_to_nifti(iEpoch, epochs[iEpoch], bids_path, epochs.times, annotated_event_for_gt)
+            export_single_epoch_to_nifti(iEpoch, epochs[iEpoch], bids_path, epochs.times, annotated_event_for_gt, ch_type)
