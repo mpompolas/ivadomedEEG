@@ -9,7 +9,7 @@ except ImportError as error:
 
 import mne_bids
 
-
+from config import export_folder
 
 data_path = mne.datasets.sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
@@ -77,8 +77,6 @@ import export_epoch_to_nifti_small
 #single_epoch.resample(sfreq=10)
 #epochs_blink['998'].plot_image(picks='meg')
 #epochs_heartbeat['999'].plot_image(picks='meg')
-
-export_folder = '/home/nas/Desktop/test_BIDS'
 
 # Select channel type to create the topographies on
 ch_type = 'grad'
