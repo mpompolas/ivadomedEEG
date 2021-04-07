@@ -34,6 +34,11 @@ def trial_export(trial, times, ch_type, outputfolder, iEpoch, suffix):
     # Export times to a file and compare with the rest of the files
     export_time_to_file(outputfolder, times)
 
+    # Load information regarding the trial
+    picks, pos, merge_channels, names, ch_type, sphere, clip_origin = \
+        mne.viz.topomap._prepare_topomap_plot(trial, ch_type, sphere=None)
+
+
 
     # Create a nifti file for the epoch
     data_nifti = np.zeros((315, 260, len(times)))  # This is for size=2
@@ -41,8 +46,8 @@ def trial_export(trial, times, ch_type, outputfolder, iEpoch, suffix):
 
     # Define the GLOBAL limits for the colormaps - If this is not set, the colorbar limits would be different per slice
     # However, if there are local (in-time) artifacts - these values get affected - discuss solutions
-    vmin = np.min(trial.data)
-    vmax = np.max(trial.data)
+    #vmin = np.min(trial.data[picks, :])
+    #vmax = np.max(trial.data[picks, :])
     vmin = None
     vmax = None
     for iTime in range(len(times)):
@@ -55,9 +60,6 @@ def trial_export(trial, times, ch_type, outputfolder, iEpoch, suffix):
                                  show=False, sensors=False)  # res = int selects res
 
         fig.canvas.draw()
-
-        picks, pos, merge_channels, names, ch_type, sphere, clip_origin = \
-            mne.viz.topomap._prepare_topomap_plot(trial, ch_type, sphere=None)
 
         inverted_coordinates = fig.axes[0].transData.transform(pos)
 
@@ -124,8 +126,8 @@ def trial_export(trial, times, ch_type, outputfolder, iEpoch, suffix):
 
     print('REDEFINE AFFINE MATRIX')
     # TODO - FIND THE CORRECT AFFINE MATRIX FOR ORIENTATION - USE TIME ON EACH SAMPLE BEFORE CROPPING TO FIND THE NOSE
-    affine = np.array([[1, 0, 0, 0],
-                       [0, 1, 0, 0],
+    affine = np.array([[0, 1, 0, 0],
+                       [-1, 0, 0, 0],
                        [0, 0, 1, 0],
                        [0, 0, 0, 1]])
 
@@ -166,15 +168,13 @@ def export_single_epoch_to_nifti(iEpoch, single_epoch, bids_path, times, annotat
     if annotated_event_for_gt in single_epoch.event_id.keys():
         annotated_event_id = single_epoch.event_id[annotated_event_for_gt]
 
-        # TODO - Find a way to get the ANNOTATED samples
+        # ANNOTATE SAMPLES BASE ON CENTRALIZED EVENT
         duration_annotation = 16  # In samples - Equally around 0 seconds - THIS IS ABSTRACT
         zero_time_index = np.where(single_epoch.times == 0)[0].tolist()[0]
         selected_samples = range(int(zero_time_index - duration_annotation/2),
                                  int(zero_time_index + duration_annotation/2))
 
-        print('MAKE SURE TO FIGURE OUT THE SAMPLES THAT EACH EVENT CORRESPONDS TO')
-
-        # TODO - Find a way to get the annotated channels
+        # TODO - DISCUSS ON WHICH CRITERION CHANNELS SHOULD BE ANNOTATED
         have_annotated_channels = True
         if not have_annotated_channels:
             selected_channels = range(trial.data.shape[0])
