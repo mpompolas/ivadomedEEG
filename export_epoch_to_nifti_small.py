@@ -25,6 +25,9 @@ def export_time_to_file(outputfolder, times):
     # TODO- CONSIDER ADDING THE GLOBAL TIME AS WELL - THIS WILL ALLOW THE CREATION OF EVENTS IN MNE STYLE
     # The assumption here is that all trials have the same time - Maybe revisit
     # save to csv file
+    if not(os.path.exists(outputfolder)):
+        Path(outputfolder).mkdir(parents=True, exist_ok=True)
+
     np.savetxt(os.path.join(outputfolder, 'times.csv'), times, delimiter=',')
 
 
@@ -41,7 +44,7 @@ def trial_export(trial, times, ch_type, outputfolder, iEpoch, suffix):
 
 
     # Create a nifti file for the epoch
-    data_nifti = np.zeros((315, 260, len(times)))  # This is for size=2
+    data_nifti = np.zeros((290, 260, len(times)))  # This is for size=2
     #data_nifti = np.zeros((705, 710, len(times)))  # This is for size=5
 
     # Define the GLOBAL limits for the colormaps - If this is not set, the colorbar limits would be different per slice
@@ -159,7 +162,10 @@ def export_single_epoch_to_nifti(iEpoch, single_epoch, bids_path, times, annotat
     # The reasoning for this is that evoked objects already have a 2D topographic plot implemented
     trial = single_epoch.average()
     suffix = ''
-    trial_export(trial, times, ch_type, os.path.join(os.path.dirname(bids_path.directory), 'anat'), iEpoch, suffix)
+
+    trial_export(trial, times, ch_type, os.path.join(
+        os.path.dirname(bids_path.directory), 'anat'), iEpoch, suffix)
+
     # This will need to be revised once the ivadomed BIDS folder tree is corrected
 
     # First zero everything on each "slice"
