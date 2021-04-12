@@ -1,3 +1,4 @@
+from autoreject import AutoReject
 import numpy as np
 import sys
 
@@ -45,6 +46,13 @@ eog_event_id = 998
 eog_events = mne.preprocessing.find_eog_events(raw)
 ecg_events = mne.preprocessing.find_ecg_events(raw)
 ecg_events = np.asarray(ecg_events[0])
+
+epochs_all = mne.Epochs(raw, np.concatenate((events, ecg_events, eog_events), axis=0), 
+                        reject=None, preload=True, event_repeated='drop')
+
+ar = AutoReject(random_state=97, n_jobs=1)
+epochs_ar, reject_log = ar.fit_transform(epochs_all, return_log=True)
+
 
 n_blinks = len(eog_events)
 onset = eog_events[:, 0] / raw.info['sfreq'] - 0.25
@@ -97,4 +105,3 @@ for iSubject in range(1, 15):
 
     # Export trials into .nii files
     export_epoch_to_nifti_small.run_export(epochs_, ch_type, annotated_event_for_gt, bids_path)
-
