@@ -101,7 +101,7 @@ def trial_export(trial, times, ch_type, outputfolder, iEpoch, suffix):
             print("ORDER OF X,Y NEED TO BE FINALIZED AFTER THE AFFINE MATRIX IS DONE")
 
         # CROP SIDES - THE COORDINATES OF THE ELECTRODES SHOULD BE SAVED AFTER CROPPING
-        crop_from_top = 20
+        crop_from_top = 50
         crop_from_bottom = -20
         crop_from_left = 20
         crop_from_right = -20
