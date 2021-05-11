@@ -117,7 +117,6 @@ def trial_export(trial, ch_type, outputfolder, iEpoch, suffix):
 
         # TODO - CONFIRM THE THRESHOLDING IS CORRECT - THIS IS DONE TO HELP WITH THE INTERPOLATION
         # I ALSO ASSIGN VALUES BELOW 0.5 TO ZERO
-
         apply_threhold = False
         if apply_threhold:  # Use unthreshold for softseg
             if suffix != '':  # In case of the derivatives, threshold

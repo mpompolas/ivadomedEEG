@@ -1,3 +1,4 @@
+from autoreject import AutoReject
 import numpy as np
 import sys
 
@@ -9,7 +10,7 @@ except ImportError as error:
 
 import mne_bids
 
-
+from config import export_folder
 
 data_path = mne.datasets.sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
@@ -56,6 +57,13 @@ eog_events = mne.preprocessing.find_eog_events(raw)
 ecg_events = mne.preprocessing.find_ecg_events(raw)
 ecg_events = np.asarray(ecg_events[0])
 
+epochs_all = mne.Epochs(raw, np.concatenate((events, ecg_events, eog_events), axis=0), 
+                        reject=None, preload=True, event_repeated='drop')
+
+ar = AutoReject(random_state=97, n_jobs=1)
+epochs_ar, reject_log = ar.fit_transform(epochs_all, return_log=True)
+
+
 n_blinks = len(eog_events)
 #onset = eog_events[:, 0] / raw.info['sfreq'] - 0.25
 #duration = np.repeat(0.5, n_blinks)
@@ -90,8 +98,6 @@ import export_epoch_to_nifti_small
 #epochs_blink['998'].plot_image(picks='meg')
 #epochs_heartbeat['999'].plot_image(picks='meg')
 
-export_folder = '/home/nas/Desktop/test_BIDS'
-
 # Select channel type to create the topographies on
 ch_type = 'grad'
 
@@ -111,4 +117,3 @@ for iSubject in range(1, 14):
 
     # Export trials into .nii files
     export_epoch_to_nifti_small.run_export(epochs_, ch_type, annotated_event_for_gt, bids_path)
-
