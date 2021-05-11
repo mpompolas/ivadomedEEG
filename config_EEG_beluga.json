@@ -1,5 +1,5 @@
 {
-    "command": "test",
+    "command": "train",
     "gpu_ids": [0],
     "path_output": "/home/knasioti/projects/rrg-gdumas85/knasioti/output_EEG",
     "model_name": "EEG_model",

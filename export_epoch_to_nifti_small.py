@@ -166,7 +166,7 @@ def export_single_epoch_to_nifti(iEpoch, single_epoch, bids_path, annotated_even
     # The reasoning for this is that evoked objects already have a 2D topographic plot implemented
     trial = single_epoch.average()
     suffix = ''
-    trial_export(trial, ch_type, os.path.join(os.path.dirname(bids_path.directory), 'anat'), iEpoch, suffix)
+    trial_export(trial, ch_type, os.path.join(bids_path.directory, 'anat'), iEpoch, suffix)
     # TODO
     # The exporting directory will need to be revised once the ivadomed BIDS folder tree is corrected
 
@@ -218,8 +218,8 @@ def export_single_epoch_to_nifti(iEpoch, single_epoch, bids_path, annotated_even
 
         suffix = '_event' + annotated_event_for_gt
 
-        subject_id = os.path.basename(os.path.dirname(bids_path.directory))
-        derivatives_output = os.path.join(os.path.dirname(os.path.dirname(bids_path.directory)),
+        subject_id = os.path.basename(bids_path.directory)
+        derivatives_output = os.path.join(os.path.dirname(bids_path.directory),
                                           'derivatives', 'labels', subject_id, 'anat')
         trial_export(trial, ch_type, derivatives_output, iEpoch, suffix)
 
@@ -232,8 +232,8 @@ def run_export(epochs, ch_type, annotated_event_for_gt, bids_path):
                    columns=['TimeSample', '0', 'ground truth event label'])
     events_df.index.name = 'epoch'
     # Create nested directory if not created already
-    Path(os.path.join(os.path.dirname(bids_path.directory), 'anat')).mkdir(parents=True, exist_ok=True)
-    events_df.to_csv(os.path.join(os.path.dirname(bids_path.directory), 'anat', "events_MNE_times.csv"), sep=",")
+    Path(os.path.join(bids_path.directory), 'anat').mkdir(parents=True, exist_ok=True)
+    events_df.to_csv(os.path.join(bids_path.directory, 'anat', "events_MNE_times.csv"), sep=",")
 
 
     run_parallel = True

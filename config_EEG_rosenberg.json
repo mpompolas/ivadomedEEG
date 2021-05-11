@@ -1,5 +1,5 @@
 {
-    "command": "test",
+    "command": "train",
     "gpu_ids": [0],
     "path_output": "/home/GRAMES.POLYMTL.CA/u111358/data_nvme_u111358/EEG-ivado/ivadomedEEG/output_EEG",
     "model_name": "EEG_model",

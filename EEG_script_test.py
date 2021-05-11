@@ -60,11 +60,8 @@ for subject in subjects:
     # Check if resampling is needed
     epochs_preprocessed = epochs_preprocessed.resample(100)
 
-    epochs_preprocessed = epochs_preprocessed[0:10]
-
     # Create bids folder
-    bids_path = mne_bids.BIDSPath(subject=subject, session='IVADOMEDSession1',
-                                  task='testing', acquisition='01', run='01', root=export_folder)
+    bids_path = mne_bids.BIDSPath(subject=subject, root=export_folder)
 
     # Use the raw object that the trials came from in order to build the BIDS tree
     mne_bids.write_raw_bids(fake_raw, bids_path, overwrite=True, verbose=True)
