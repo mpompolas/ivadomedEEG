@@ -17,6 +17,16 @@ raw = mne.io.read_raw_fif(raw_fname)
 raw.set_eeg_reference('average', projection=True)
 
 
+
+'''
+# Check sensor positioning
+import matplotlib.pyplot as plt
+fig = plt.figure()
+ax2d = fig.add_subplot(121)
+raw.plot_sensors(ch_type='eeg', axes=ax2d, show_names=True)
+'''
+
+
 raw.info['bads'] = ['MEG 2443']
 
 # Assign line frequency - Required for BIDS export
@@ -47,14 +57,16 @@ ecg_events = mne.preprocessing.find_ecg_events(raw)
 ecg_events = np.asarray(ecg_events[0])
 
 n_blinks = len(eog_events)
-onset = eog_events[:, 0] / raw.info['sfreq'] - 0.25
-duration = np.repeat(0.5, n_blinks)
-description = ['blink'] * n_blinks
+#onset = eog_events[:, 0] / raw.info['sfreq'] - 0.25
+#duration = np.repeat(0.5, n_blinks)
+#description = ['blink'] * n_blinks
 #annotations = mne.Annotations(onset, duration, description)
 #raw.set_annotations(annotations)
-epochs_blink = mne.Epochs(raw, eog_events, eog_event_id, reject=None, preload=True)
+#epochs_blink = mne.Epochs(raw, eog_events, eog_event_id, reject=None, preload=True)
+epochs_blink = mne.Epochs(raw, eog_events, eog_event_id, reject=None, preload=True, tmin=-0.5, tmax=0.5)
+
 #raw.plot(events=eog_events)  # To see the annotated segments.
-epochs_blink = epochs_blink[:-6]
+#epochs_blink = epochs_blink[:-6]
 
 
 n_heartbeat = len(ecg_events)
@@ -83,7 +95,7 @@ export_folder = '/home/nas/Desktop/test_BIDS'
 # Select channel type to create the topographies on
 ch_type = 'grad'
 
-for iSubject in range(1, 15):
+for iSubject in range(1, 14):
     annotated_event_for_gt = '998'  # This is the event that will be used to create the derivatives
                                     # 999 Heartbeats
                                     # 998 Blinks

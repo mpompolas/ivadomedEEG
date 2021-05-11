@@ -57,12 +57,13 @@ def get_events(nifti_file):
         plt.ylabel("Channels")
         plt.show()
 
-        return channels
+    return channels
 
 
 nifti_file = '/home/nas/Desktop/test_BIDS/derivatives/labels/sub-IVADOMEDSubjTest1/anat/sub-IVADOMEDSubjTest1_epoch0_event998.nii.gz'
 
-get_events(nifti_file)
+annotated_channels = get_events(nifti_file)
+print('Done')
 
 
 
